@@ -1,0 +1,12 @@
+[
+  {
+    "id": "TXN-1772261678631",
+    "employeeId": "Junior_Dev",
+    "merchant": "AWS",
+    "mcc": "SaaS",
+    "amount": 500,
+    "status": "PENDING_MANAGER_APPROVAL",
+    "managerRequired": "Product_Lead",
+    "initiatedAt": "2026-02-28T06:54:38.616Z"
+  }
+]

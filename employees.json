@@ -1,0 +1,14 @@
+{
+  "Junior_Dev": {
+    "limit": 200,
+    "manager": "Product_Lead"
+  },
+  "Product_Lead": {
+    "limit": 2000,
+    "manager": "CFO"
+  },
+  "CFO": {
+    "limit": 1000000,
+    "manager": null
+  }
+}

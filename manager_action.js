@@ -1,0 +1,70 @@
+const fs = require("fs");
+const path = require("path");
+
+const PENDING_FILE = path.join(__dirname, "pending_transactions.json");
+
+function loadPending() {
+  if (!fs.existsSync(PENDING_FILE)) return [];
+  return JSON.parse(fs.readFileSync(PENDING_FILE));
+}
+
+function savePending(transactions) {
+  fs.writeFileSync(PENDING_FILE, JSON.stringify(transactions, null, 2));
+}
+
+function managerAction(txId, managerId, action) {
+  const timestamp = new Date().toISOString();
+  const pending = loadPending();
+  const idx = pending.findIndex(tx => tx.id === txId);
+
+  if (idx === -1) {
+    console.log(`[ERROR] Transaction ${txId} not found in pending queue.`);
+    return { status: "ERROR", reason: "Transaction not found" };
+  }
+
+  const tx = pending[idx];
+
+  if (tx.status !== "PENDING_MANAGER_APPROVAL") {
+    console.log(`[ERROR] Transaction ${txId} is not pending approval (status: ${tx.status}).`);
+    return { status: "ERROR", reason: "Transaction not in pending state" };
+  }
+
+  if (tx.managerRequired !== managerId) {
+    console.log(`[DENIED] ${managerId} is not authorized to approve this transaction. Required: ${tx.managerRequired}`);
+    return { status: "DENIED", reason: "Unauthorized manager" };
+  }
+
+  const validActions = ["APPROVE", "DENY"];
+  if (!validActions.includes(action.toUpperCase())) {
+    console.log(`[ERROR] Invalid action '${action}'. Must be APPROVE or DENY.`);
+    return { status: "ERROR", reason: "Invalid action" };
+  }
+
+  tx.status = action.toUpperCase() === "APPROVE" ? "APPROVED_BY_MANAGER" : "DENIED_BY_MANAGER";
+  tx.resolvedBy = managerId;
+  tx.resolvedAt = timestamp;
+
+  pending[idx] = tx;
+  savePending(pending);
+
+  console.log("\n============================");
+  console.log(`[${timestamp}] MANAGER ACTION`);
+  console.log(`  Transaction ID : ${txId}`);
+  console.log(`  Manager        : ${managerId}`);
+  console.log(`  Action         : ${action.toUpperCase()}`);
+  console.log(`  New Status     : ${tx.status}`);
+  console.log("============================");
+
+  return { status: tx.status, transactionId: txId };
+}
+
+// --- CLI usage: node manager_action.js <txId> <managerId> <APPROVE|DENY> ---
+const [txId, managerId, action] = process.argv.slice(2);
+if (!txId || !managerId || !action) {
+  console.log("Usage: node manager_action.js <transactionId> <managerId> <APPROVE|DENY>");
+  process.exit(1);
+}
+
+managerAction(txId, managerId, action);
+
+module.exports = { managerAction };

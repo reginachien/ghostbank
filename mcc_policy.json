@@ -1,0 +1,4 @@
+{
+  "allowed": ["SaaS", "Cloud", "Travel"],
+  "blocked": ["Gambling", "Retail"]
+}
