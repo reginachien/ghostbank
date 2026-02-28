@@ -2,6 +2,26 @@ const fs = require("fs");
 const path = require("path");
 
 const PENDING_FILE = path.join(__dirname, "pending_transactions.json");
+const LEDGER_FILE = path.join(__dirname, "ledger.json");
+
+function loadLedger() {
+  return JSON.parse(fs.readFileSync(LEDGER_FILE));
+}
+
+function debitLedger(amount, txId, description) {
+  const ledger = loadLedger();
+  ledger.balance -= amount;
+  ledger.transactions.push({
+    id: txId,
+    type: "DEBIT",
+    amount,
+    description,
+    timestamp: new Date().toISOString(),
+    balanceAfter: ledger.balance
+  });
+  fs.writeFileSync(LEDGER_FILE, JSON.stringify(ledger, null, 2));
+  return ledger.balance;
+}
 
 function loadPending() {
   if (!fs.existsSync(PENDING_FILE)) return [];
@@ -40,20 +60,50 @@ function managerAction(txId, managerId, action) {
     return { status: "ERROR", reason: "Invalid action" };
   }
 
-  tx.status = action.toUpperCase() === "APPROVE" ? "APPROVED_BY_MANAGER" : "DENIED_BY_MANAGER";
+  if (action.toUpperCase() === "APPROVE") {
+    const ledger = loadLedger();
+    if (tx.amount > ledger.balance) {
+      tx.status = "DENIED_INSUFFICIENT_FUNDS";
+      tx.resolvedBy = managerId;
+      tx.resolvedAt = timestamp;
+      pending[idx] = tx;
+      savePending(pending);
+      console.log("\n============================");
+      console.log(`[${timestamp}] MANAGER ACTION`);
+      console.log(`  Transaction ID : ${txId}`);
+      console.log(`  Manager        : ${managerId}`);
+      console.log(`  Action         : APPROVE`);
+      console.log(`  New Status     : DENIED_INSUFFICIENT_FUNDS`);
+      console.log(`  Requested      : $${tx.amount}`);
+      console.log(`  Vault Balance  : $${ledger.balance}`);
+      console.log("============================");
+      return { status: "DENIED_INSUFFICIENT_FUNDS", transactionId: txId };
+    }
+    const balanceAfter = debitLedger(tx.amount, txId, `${tx.employeeId} → ${tx.merchant} [mgr: ${managerId}]`);
+    tx.status = "APPROVED_BY_MANAGER";
+    console.log("\n============================");
+    console.log(`[${timestamp}] MANAGER ACTION`);
+    console.log(`  Transaction ID  : ${txId}`);
+    console.log(`  Manager         : ${managerId}`);
+    console.log(`  Action          : APPROVE`);
+    console.log(`  New Status      : APPROVED_BY_MANAGER`);
+    console.log(`  Remaining Vault : $${balanceAfter}`);
+    console.log("============================");
+  } else {
+    tx.status = "DENIED_BY_MANAGER";
+    console.log("\n============================");
+    console.log(`[${timestamp}] MANAGER ACTION`);
+    console.log(`  Transaction ID : ${txId}`);
+    console.log(`  Manager        : ${managerId}`);
+    console.log(`  Action         : DENY`);
+    console.log(`  New Status     : DENIED_BY_MANAGER`);
+    console.log("============================");
+  }
+
   tx.resolvedBy = managerId;
   tx.resolvedAt = timestamp;
-
   pending[idx] = tx;
   savePending(pending);
-
-  console.log("\n============================");
-  console.log(`[${timestamp}] MANAGER ACTION`);
-  console.log(`  Transaction ID : ${txId}`);
-  console.log(`  Manager        : ${managerId}`);
-  console.log(`  Action         : ${action.toUpperCase()}`);
-  console.log(`  New Status     : ${tx.status}`);
-  console.log("============================");
 
   return { status: tx.status, transactionId: txId };
 }

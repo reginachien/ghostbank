@@ -1,0 +1,22 @@
+{
+  "balance": 8838,
+  "currency": "USD",
+  "transactions": [
+    {
+      "id": "FUND-001",
+      "type": "CREDIT",
+      "amount": 8888,
+      "description": "Initial Ghost Bank funding",
+      "timestamp": "2026-02-28T00:00:00.000Z",
+      "balanceAfter": 8888
+    },
+    {
+      "id": "TXN-1772263096962",
+      "type": "DEBIT",
+      "amount": 50,
+      "description": "Junior_Dev → Pizza Roma",
+      "timestamp": "2026-02-28T07:18:16.962Z",
+      "balanceAfter": 8838
+    }
+  ]
+}

@@ -5,6 +5,7 @@ const employees = JSON.parse(fs.readFileSync(path.join(__dirname, "employees.jso
 const mccPolicy = JSON.parse(fs.readFileSync(path.join(__dirname, "mcc_policy.json")));
 
 const PENDING_FILE = path.join(__dirname, "pending_transactions.json");
+const LEDGER_FILE = path.join(__dirname, "ledger.json");
 
 function loadPending() {
   if (!fs.existsSync(PENDING_FILE)) return [];
@@ -13,6 +14,25 @@ function loadPending() {
 
 function savePending(transactions) {
   fs.writeFileSync(PENDING_FILE, JSON.stringify(transactions, null, 2));
+}
+
+function loadLedger() {
+  return JSON.parse(fs.readFileSync(LEDGER_FILE));
+}
+
+function debitLedger(amount, txId, description) {
+  const ledger = loadLedger();
+  ledger.balance -= amount;
+  ledger.transactions.push({
+    id: txId,
+    type: "DEBIT",
+    amount,
+    description,
+    timestamp: new Date().toISOString(),
+    balanceAfter: ledger.balance
+  });
+  fs.writeFileSync(LEDGER_FILE, JSON.stringify(ledger, null, 2));
+  return ledger.balance;
 }
 
 function authorize({ employeeId, merchant, mcc, amount }) {
@@ -44,8 +64,17 @@ function authorize({ employeeId, merchant, mcc, amount }) {
   }
 
   if (amount <= employee.limit) {
+    const ledger = loadLedger();
+    if (amount > ledger.balance) {
+      console.log(`[DENIED] Insufficient funds. Requested: $${amount}, Available: $${ledger.balance}`);
+      return { status: "DENIED", reason: "Insufficient funds" };
+    }
+    const txId = `TXN-${Date.now()}`;
+    const balanceAfter = debitLedger(amount, txId, `${employeeId} → ${merchant}`);
     console.log(`[APPROVED] $${amount} is within ${employeeId}'s limit of $${employee.limit}.`);
-    return { status: "APPROVED" };
+    console.log(`  Transaction ID  : ${txId}`);
+    console.log(`  Remaining Vault : $${balanceAfter}`);
+    return { status: "APPROVED", transactionId: txId, remainingBalance: balanceAfter };
   }
 
   // Allowed MCC but over limit — escalate

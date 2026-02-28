@@ -5,8 +5,22 @@
     "merchant": "AWS",
     "mcc": "SaaS",
     "amount": 500,
-    "status": "PENDING_MANAGER_APPROVAL",
+    "status": "APPROVED_BY_MANAGER",
     "managerRequired": "Product_Lead",
-    "initiatedAt": "2026-02-28T06:54:38.616Z"
+    "initiatedAt": "2026-02-28T06:54:38.616Z",
+    "resolvedBy": "Product_Lead",
+    "resolvedAt": "2026-02-28T07:05:44.543Z"
+  },
+  {
+    "id": "TXN-1772263145689",
+    "employeeId": "Product_Lead",
+    "merchant": "Delta Airlines",
+    "mcc": "Travel",
+    "amount": 10000,
+    "status": "DENIED_INSUFFICIENT_FUNDS",
+    "managerRequired": "CFO",
+    "initiatedAt": "2026-02-28T07:19:05.676Z",
+    "resolvedBy": "CFO",
+    "resolvedAt": "2026-02-28T07:33:47.964Z"
   }
 ]
