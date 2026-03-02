@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghost Bank</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .pulse-dot { animation: pulse 2s infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .card-hover { transition: border-color 0.2s, box-shadow 0.2s; }
+    .card-hover:hover { border-color: #34d399; box-shadow: 0 0 0 1px #34d39922; }
+    .fade-in { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 px-8 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-emerald-400 flex items-center justify-center">
+        <span class="text-slate-900 font-bold text-sm">G</span>
+      </div>
+      <span class="text-lg font-semibold tracking-tight">Ghost Bank</span>
+      <span class="text-slate-500 text-sm font-light">/ Dashboard</span>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-slate-500">
+      <span class="pulse-dot w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+      <span id="sync-status">Syncing...</span>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-8 py-10 space-y-8">
+
+    <!-- Balance Card -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="md:col-span-2 bg-slate-800 border border-slate-700 rounded-2xl p-6 card-hover">
+        <p class="text-slate-400 text-xs uppercase tracking-widest mb-2">Vault Balance</p>
+        <p id="balance" class="mono text-5xl font-semibold text-emerald-400">—</p>
+        <p class="text-slate-500 text-xs mt-3">USD · Ghost Bank Issuer Account</p>
+      </div>
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 card-hover flex flex-col justify-between">
+        <p class="text-slate-400 text-xs uppercase tracking-widest mb-2">Transactions</p>
+        <p id="tx-count" class="mono text-4xl font-semibold text-slate-100">—</p>
+        <p class="text-slate-500 text-xs mt-3">Ledger entries</p>
+      </div>
+    </section>
+
+    <!-- Ledger -->
+    <section>
+      <h2 class="text-xs uppercase tracking-widest text-slate-500 mb-4">Ledger History</h2>
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase tracking-wider">
+              <th class="text-left px-5 py-3">ID</th>
+              <th class="text-left px-5 py-3">Type</th>
+              <th class="text-left px-5 py-3">Description</th>
+              <th class="text-right px-5 py-3">Amount</th>
+              <th class="text-right px-5 py-3">Balance After</th>
+            </tr>
+          </thead>
+          <tbody id="ledger-rows">
+            <tr><td colspan="5" class="text-center py-8 text-slate-600">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Pending Queue -->
+    <section>
+      <h2 class="text-xs uppercase tracking-widest text-slate-500 mb-4">Transaction Queue</h2>
+      <div id="pending-list" class="space-y-3">
+        <div class="text-center py-8 text-slate-600 text-sm">Loading...</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-slate-700 border border-slate-600 text-sm px-5 py-3 rounded-xl shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none mono"></div>
+
+  <script>
+    const statusEl = document.getElementById('sync-status');
+    const balanceEl = document.getElementById('balance');
+    const txCountEl = document.getElementById('tx-count');
+    const ledgerRowsEl = document.getElementById('ledger-rows');
+    const pendingListEl = document.getElementById('pending-list');
+    const toastEl = document.getElementById('toast');
+
+    function showToast(msg, color = 'text-emerald-400') {
+      toastEl.className = `fixed bottom-6 right-6 bg-slate-700 border border-slate-600 text-sm px-5 py-3 rounded-xl shadow-xl opacity-100 transition-opacity duration-300 mono ${color}`;
+      toastEl.textContent = msg;
+      setTimeout(() => { toastEl.style.opacity = '0'; }, 3000);
+    }
+
+    function statusBadge(status) {
+      const map = {
+        APPROVED:                 'bg-emerald-900 text-emerald-300 border-emerald-700',
+        APPROVED_BY_MANAGER:      'bg-emerald-900 text-emerald-300 border-emerald-700',
+        PENDING_MANAGER_APPROVAL: 'bg-amber-900 text-amber-300 border-amber-700',
+        DENIED:                   'bg-red-900 text-red-300 border-red-700',
+        DENIED_BY_MANAGER:        'bg-red-900 text-red-300 border-red-700',
+        DENIED_INSUFFICIENT_FUNDS:'bg-red-900 text-red-300 border-red-700',
+      };
+      const cls = map[status] || 'bg-slate-700 text-slate-300 border-slate-600';
+      return `<span class="mono text-xs px-2 py-0.5 rounded-md border ${cls}">${status}</span>`;
+    }
+
+    function fmt(amount) {
+      return '$' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2 });
+    }
+
+    async function approveAction(txId, managerId, action) {
+      try {
+        const res = await fetch('/api/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transactionId: txId, managerId, action })
+        });
+        const data = await res.json();
+        if (data.status === 'APPROVED_BY_MANAGER') {
+          showToast(`✓ ${txId} approved`, 'text-emerald-400');
+        } else if (data.status === 'DENIED_BY_MANAGER') {
+          showToast(`✗ ${txId} denied`, 'text-red-400');
+        } else if (data.status === 'DENIED_INSUFFICIENT_FUNDS') {
+          showToast(`✗ Insufficient vault funds`, 'text-red-400');
+        } else {
+          showToast(data.error || data.reason || 'Unknown response', 'text-amber-400');
+        }
+        fetchData();
+      } catch (err) {
+        showToast('Request failed', 'text-red-400');
+      }
+    }
+
+    function renderManagerInput(tx) {
+      const inputId = `mgr-${tx.id}`;
+      return `
+        <div class="flex items-center gap-2 mt-3">
+          <input id="${inputId}" type="text" placeholder="Manager ID (e.g. Product_Lead)"
+            class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-sm mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
+          <button onclick="
+            const mgr = document.getElementById('${inputId}').value.trim();
+            if (!mgr) return;
+            approveAction('${tx.id}', mgr, 'APPROVE')"
+            class="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-sm font-semibold transition-colors">
+            Approve
+          </button>
+          <button onclick="
+            const mgr = document.getElementById('${inputId}').value.trim();
+            if (!mgr) return;
+            approveAction('${tx.id}', mgr, 'DENY')"
+            class="px-4 py-1.5 rounded-lg bg-slate-700 hover:bg-red-900 border border-slate-600 hover:border-red-700 text-slate-300 hover:text-red-300 text-sm font-semibold transition-colors">
+            Deny
+          </button>
+        </div>`;
+    }
+
+    async function fetchData() {
+      try {
+        const res = await fetch('/api/data');
+        const { ledger, pending } = await res.json();
+
+        // Balance
+        balanceEl.textContent = fmt(ledger.balance);
+        txCountEl.textContent = ledger.transactions.length;
+        statusEl.textContent = 'Live · ' + new Date().toLocaleTimeString();
+
+        // Ledger rows
+        ledgerRowsEl.innerHTML = [...ledger.transactions].reverse().map(tx => `
+          <tr class="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors fade-in">
+            <td class="px-5 py-3 mono text-slate-400 text-xs">${tx.id}</td>
+            <td class="px-5 py-3">
+              <span class="mono text-xs px-2 py-0.5 rounded-md border ${tx.type === 'CREDIT' ? 'bg-emerald-900 text-emerald-300 border-emerald-700' : 'bg-slate-700 text-slate-300 border-slate-600'}">${tx.type}</span>
+            </td>
+            <td class="px-5 py-3 text-slate-300 text-xs">${tx.description}</td>
+            <td class="px-5 py-3 text-right mono ${tx.type === 'CREDIT' ? 'text-emerald-400' : 'text-slate-200'}">${tx.type === 'CREDIT' ? '+' : '-'}${fmt(tx.amount)}</td>
+            <td class="px-5 py-3 text-right mono text-slate-400 text-xs">${fmt(tx.balanceAfter)}</td>
+          </tr>`).join('');
+
+        // Pending queue
+        if (!pending.length) {
+          pendingListEl.innerHTML = '<div class="text-center py-8 text-slate-600 text-sm">No transactions in queue.</div>';
+          return;
+        }
+
+        pendingListEl.innerHTML = pending.map(tx => `
+          <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 card-hover fade-in">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="mono text-xs text-slate-500">${tx.id}</span>
+                  ${statusBadge(tx.status)}
+                </div>
+                <p class="text-slate-100 font-medium">${tx.merchant}
+                  <span class="mono text-xs text-slate-500 ml-1">${tx.mcc}</span>
+                </p>
+                <p class="text-slate-400 text-xs mt-0.5">${tx.employeeId} · escalated to ${tx.managerRequired}</p>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="mono text-2xl font-semibold text-slate-100">${fmt(tx.amount)}</p>
+                <p class="text-slate-500 text-xs mt-0.5">${new Date(tx.initiatedAt).toLocaleString()}</p>
+              </div>
+            </div>
+            ${tx.status === 'PENDING_MANAGER_APPROVAL' ? renderManagerInput(tx) : ''}
+            ${tx.resolvedBy ? `<p class="text-xs text-slate-600 mt-3 mono">Resolved by ${tx.resolvedBy} · ${new Date(tx.resolvedAt).toLocaleString()}</p>` : ''}
+          </div>`).join('');
+
+      } catch (err) {
+        statusEl.textContent = 'Connection lost';
+      }
+    }
+
+    fetchData();
+    setInterval(fetchData, 2000);
+  </script>
+</body>
+</html>

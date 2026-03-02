@@ -109,12 +109,13 @@ function managerAction(txId, managerId, action) {
 }
 
 // --- CLI usage: node manager_action.js <txId> <managerId> <APPROVE|DENY> ---
-const [txId, managerId, action] = process.argv.slice(2);
-if (!txId || !managerId || !action) {
-  console.log("Usage: node manager_action.js <transactionId> <managerId> <APPROVE|DENY>");
-  process.exit(1);
+if (require.main === module) {
+  const [txId, managerId, action] = process.argv.slice(2);
+  if (!txId || !managerId || !action) {
+    console.log("Usage: node manager_action.js <transactionId> <managerId> <APPROVE|DENY>");
+    process.exit(1);
+  }
+  managerAction(txId, managerId, action);
 }
-
-managerAction(txId, managerId, action);
 
 module.exports = { managerAction };

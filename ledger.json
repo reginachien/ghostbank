@@ -1,5 +1,5 @@
 {
-  "balance": 8838,
+  "balance": 7908,
   "currency": "USD",
   "transactions": [
     {
@@ -17,6 +17,38 @@
       "description": "Junior_Dev → Pizza Roma",
       "timestamp": "2026-02-28T07:18:16.962Z",
       "balanceAfter": 8838
+    },
+    {
+      "id": "TXN-1772345546232",
+      "type": "DEBIT",
+      "amount": 75,
+      "description": "Junior_Dev → Chipotle",
+      "timestamp": "2026-03-01T06:12:26.232Z",
+      "balanceAfter": 8763
+    },
+    {
+      "id": "TXN-1772345665213",
+      "type": "DEBIT",
+      "amount": 25,
+      "description": "Junior_Dev → Sweetgreen",
+      "timestamp": "2026-03-01T06:14:25.213Z",
+      "balanceAfter": 8738
+    },
+    {
+      "id": "TXN-1772345678537",
+      "type": "DEBIT",
+      "amount": 75,
+      "description": "Junior_Dev → Chipotle",
+      "timestamp": "2026-03-01T06:14:38.537Z",
+      "balanceAfter": 8663
+    },
+    {
+      "id": "TXN-1772345705764",
+      "type": "DEBIT",
+      "amount": 755,
+      "description": "Junior_Dev → Chipotle [mgr: Product_Lead]",
+      "timestamp": "2026-03-01T06:19:53.762Z",
+      "balanceAfter": 7908
     }
   ]
 }

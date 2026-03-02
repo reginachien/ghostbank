@@ -22,5 +22,17 @@
     "initiatedAt": "2026-02-28T07:19:05.676Z",
     "resolvedBy": "CFO",
     "resolvedAt": "2026-02-28T07:33:47.964Z"
+  },
+  {
+    "id": "TXN-1772345705764",
+    "employeeId": "Junior_Dev",
+    "merchant": "Chipotle",
+    "mcc": "Dining",
+    "amount": 755,
+    "status": "APPROVED_BY_MANAGER",
+    "managerRequired": "Product_Lead",
+    "initiatedAt": "2026-03-01T06:15:05.760Z",
+    "resolvedBy": "Product_Lead",
+    "resolvedAt": "2026-03-01T06:19:53.756Z"
   }
 ]
