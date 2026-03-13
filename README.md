@@ -34,10 +34,25 @@ We expanded the "Kernel" to include a web-based management layer:
 
 
 ---
-
-## 🛠️ Usage
-
 ### 1. Start the Bank Server
 In your terminal, run the server to host the dashboard:
 ```bash
 node server.js
+``` 
+
+### 2. Initiate a Transaction
+Open a second terminal window. You can use flags or follow the interactive prompts:
+
+```bash
+# Using Flags
+node authorize.js --amount 45.00 --merchant "Target" --name "Regina"
+
+# Using Interactive Mode
+node authorize.js
+``` 
+
+### 3. Manager Approval Workflow
+1. Open your browser to `http://localhost:3000`.
+2. Locate your transaction in the **Transaction Queue**.
+3. Enter `Product_Lead` in the **Manager ID** field.
+4. Click **Approve**.
