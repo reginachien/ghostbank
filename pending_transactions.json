@@ -34,5 +34,35 @@
     "initiatedAt": "2026-03-01T06:15:05.760Z",
     "resolvedBy": "Product_Lead",
     "resolvedAt": "2026-03-01T06:19:53.756Z"
+  },
+  {
+    "id": "1773381429786",
+    "name": "Regina",
+    "merchant": "Target",
+    "amount": 45,
+    "status": "pending",
+    "timestamp": "2026-03-13T05:57:09.786Z"
+  },
+  {
+    "id": "1773381719953",
+    "transactionId": "1773381719953",
+    "name": "Regina",
+    "merchant": "Target",
+    "amount": 45,
+    "status": "pending",
+    "date": "3/12/2026",
+    "timestamp": "2026-03-13T06:01:59.998Z"
+  },
+  {
+    "id": "TXN-1773381972493",
+    "employeeId": "Regina",
+    "merchant": "Target",
+    "mcc": "",
+    "amount": 45,
+    "status": "APPROVED_BY_MANAGER",
+    "managerRequired": "Product_Lead",
+    "initiatedAt": "2026-03-13T06:06:12.494Z",
+    "resolvedBy": "Product_Lead",
+    "resolvedAt": "2026-03-13T06:07:51.727Z"
   }
 ]

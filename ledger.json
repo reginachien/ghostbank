@@ -1,5 +1,5 @@
 {
-  "balance": 7908,
+  "balance": 7863,
   "currency": "USD",
   "transactions": [
     {
@@ -49,6 +49,14 @@
       "description": "Junior_Dev → Chipotle [mgr: Product_Lead]",
       "timestamp": "2026-03-01T06:19:53.762Z",
       "balanceAfter": 7908
+    },
+    {
+      "id": "TXN-1773381972493",
+      "type": "DEBIT",
+      "amount": 45,
+      "description": "Regina → Target [mgr: Product_Lead]",
+      "timestamp": "2026-03-13T06:07:51.727Z",
+      "balanceAfter": 7863
     }
   ]
 }
